@@ -4,38 +4,27 @@ import (
   "net/http"
   "io/ioutil"
   "os"
-  "github.com/urfave/cli"
   "fmt"
   "path"
   "errors"
   "strconv"
-  "net"
+  "github.com/urfave/cli"
+  "github.com/axetroy/local-ip"
 )
-
-// GetLocalIP returns the non loopback local IP of the host
-func GetLocalIP() string {
-  addrs, err := net.InterfaceAddrs()
-  if err != nil {
-    return ""
-  }
-  for _, address := range addrs {
-    // check the address type and if it is not a loopback the display it
-    if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-      if ipnet.IP.To4() != nil {
-        return ipnet.IP.String()
-      }
-    }
-  }
-  return ""
-}
 
 func main() {
 
   var (
     downloadTimes    int
     shareFileAbsPath string
-    ip               = GetLocalIP()
+    ip               string
+    err              error
   )
+
+  if err, ip = local_ip.Get(); err != nil {
+    panic(err)
+    return
+  }
 
   app := cli.NewApp()
 
@@ -121,7 +110,7 @@ func main() {
       return
     }
 
-    fmt.Printf(`The file <%s> Share on http://%s%v`, path.Base(absFilePath), ip, server.Addr)
+    fmt.Printf(`The file <%s> Share on http://%s%v\n`, path.Base(absFilePath), ip, server.Addr)
 
     err = server.ListenAndServe()
 
