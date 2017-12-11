@@ -8,6 +8,7 @@ import (
   "path"
   "errors"
   "strconv"
+  "time"
   "github.com/urfave/cli"
   "github.com/axetroy/local-ip"
 )
@@ -20,6 +21,17 @@ func main() {
     ip               string
     err              error
   )
+
+  ticker := time.NewTicker(time.Microsecond * 100)
+
+  go func() {
+    for range ticker.C {
+      if downloadTimes > 0 {
+        fmt.Println("The file have been download. close server.")
+        os.Exit(0)
+      }
+    }
+  }()
 
   if err, ip = local_ip.Get(); err != nil {
     panic(err)
