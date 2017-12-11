@@ -1,4 +1,4 @@
-## An cli tool to share your file
+## A cli tool to share your file
 
 ![License](https://img.shields.io/badge/license-Apache-green.svg)
 
