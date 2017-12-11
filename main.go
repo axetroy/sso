@@ -46,6 +46,7 @@ func main() {
   http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 
     if downloadTimes > 0 {
+      fmt.Println("The file have been download. close server.")
       os.Exit(0)
       return
     }
@@ -58,6 +59,7 @@ func main() {
     if b, err = ioutil.ReadFile(shareFileAbsPath); err != nil {
       writer.Write([]byte(err.Error()))
     } else {
+      writer.Header().Add("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", path.Base(shareFileAbsPath)))
       if length, err = writer.Write(b); err != nil {
         writer.Write([]byte(err.Error()))
         return
@@ -110,7 +112,7 @@ func main() {
       return
     }
 
-    fmt.Printf(`The file <%s> Share on http://%s%v\n`, path.Base(absFilePath), ip, server.Addr)
+    fmt.Println("The file " + path.Base(absFilePath) + "Share on http:://" + ip + server.Addr)
 
     err = server.ListenAndServe()
 
