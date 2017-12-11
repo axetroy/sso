@@ -1,19 +1,15 @@
-language: node_js
+language: go
 sudo: false
 
 os:
   - linux
 
-node_js:
-  - '6.10.0'
+go: master
 
-cache:
-  yarn: true
-  directories:
-    - node_modules
+before_script:
+  - go get golang.org/x/tools/cmd/cover
+  - go get github.com/mattn/goveralls
 
 script:
-  - echo "test success..."
-
-after_script:
-  - yarn run coverage
+  - go test -v -covermode=count -coverprofile=coverage.out
+  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci
