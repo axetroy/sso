@@ -5,7 +5,7 @@
 ## Usage
 
 ```bash
-go install github.com/axetroy/sso
+go get -v github.com/axetroy/sso
 
 sso README.md
 ```
