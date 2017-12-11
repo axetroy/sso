@@ -8,6 +8,8 @@
 go get -v github.com/axetroy/sso
 
 sso README.md
+
+The file README.md Share on http:://192.168.1.6:1066
 ```
 
 ## Contributing

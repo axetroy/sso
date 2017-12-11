@@ -112,7 +112,7 @@ func main() {
       return
     }
 
-    fmt.Println("The file " + path.Base(absFilePath) + "Share on http:://" + ip + server.Addr)
+    fmt.Println("The file " + path.Base(absFilePath) + " Share on http:://" + ip + server.Addr)
 
     err = server.ListenAndServe()
 
