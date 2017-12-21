@@ -48,7 +48,7 @@ func main() {
 
   app.Flags = []cli.Flag{
     cli.Int64Flag{
-      Name:  "port",
+      Name:  "port, p",
       Value: 1066,
       Usage: "The port of server",
     },
