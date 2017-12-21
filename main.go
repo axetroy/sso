@@ -16,9 +16,10 @@ import (
 func main() {
 
   var (
-    downloadTimes    int
-    shareFileAbsPath string
-    ip               string
+    downloading      bool   // 是否正在下载
+    downloadTimes    int    // 已被下载的次数
+    shareFileAbsPath string // 分享文件的绝对路径
+    ip               string // ip
     err              error
   )
 
@@ -63,6 +64,13 @@ func main() {
       return
     }
 
+    if downloading {
+      writer.Write([]byte("The file is being downloading."))
+      return
+    }
+
+    downloading = true
+
     var (
       b      []byte
       err    error
@@ -72,6 +80,7 @@ func main() {
       writer.Write([]byte(err.Error()))
     } else {
       writer.Header().Add("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", path.Base(shareFileAbsPath)))
+      writer.Header().Add("Content-Length", strconv.Itoa(len(b)))
       if length, err = writer.Write(b); err != nil {
         writer.Write([]byte(err.Error()))
         return
