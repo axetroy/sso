@@ -11,7 +11,9 @@ go get -v github.com/axetroy/sso
 
 sso README.md
 
-The file README.md Share on http:://192.168.1.6:1066
+The file README.md have been shared on http://192.168.8.144:25011
+Once file been downloaded, Service will shut down automatically.
+
 ```
 
 ## Contributing
