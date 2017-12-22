@@ -9,9 +9,26 @@ import (
   "errors"
   "strconv"
   "time"
+  "net"
   "github.com/urfave/cli"
   "github.com/axetroy/local-ip"
 )
+
+func getFreePort() (port int, err error) {
+  listener, err := net.Listen("tcp", "127.0.0.1:0")
+  if err != nil {
+    return 0, err
+  }
+  defer listener.Close()
+
+  addr := listener.Addr().String()
+  _, portString, err := net.SplitHostPort(addr)
+  if err != nil {
+    return 0, err
+  }
+
+  return strconv.Atoi(portString)
+}
 
 func main() {
 
@@ -49,7 +66,6 @@ func main() {
   app.Flags = []cli.Flag{
     cli.Int64Flag{
       Name:  "port, p",
-      Value: 1066,
       Usage: "The port of server",
     },
   }
@@ -110,6 +126,14 @@ func main() {
       absFilePath string
     )
 
+    if port == 0 {
+      if portInt, err := getFreePort(); err != nil {
+        return err
+      } else {
+        port = int64(portInt)
+      }
+    }
+
     server.Addr = ":" + strconv.Itoa(int(port))
 
     if cwd, err = os.Getwd(); err != nil {
@@ -133,7 +157,9 @@ func main() {
       return
     }
 
-    fmt.Println("The file " + path.Base(absFilePath) + " Share on http://" + ip + server.Addr)
+    fmt.Println("The file " + path.Base(absFilePath) + " have been shared on http://" + ip + server.Addr)
+
+    fmt.Println("Once file been downloaded, Service will shut down automatically.")
 
     err = server.ListenAndServe()
 
