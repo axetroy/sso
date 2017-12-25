@@ -2,7 +2,6 @@ package main
 
 import (
   "net/http"
-  "io/ioutil"
   "os"
   "fmt"
   "path"
@@ -12,6 +11,8 @@ import (
   "net"
   "github.com/urfave/cli"
   "github.com/axetroy/local-ip"
+  "io"
+  "bufio"
 )
 
 func getFreePort() (port int, err error) {
@@ -73,7 +74,6 @@ func main() {
   server := &http.Server{Addr: ":1066"}
 
   http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-
     if downloadTimes > 0 {
       fmt.Println("The file have been download. close server.")
       os.Exit(0)
@@ -85,28 +85,43 @@ func main() {
       return
     }
 
+    defer func() {
+      downloading = false
+    }()
+
     downloading = true
 
-    var (
-      b      []byte
-      err    error
-      length int
-    )
-    if b, err = ioutil.ReadFile(shareFileAbsPath); err != nil {
-      writer.Write([]byte(err.Error()))
-    } else {
-      writer.Header().Add("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", path.Base(shareFileAbsPath)))
-      writer.Header().Add("Content-Length", strconv.Itoa(len(b)))
-      if length, err = writer.Write(b); err != nil {
-        writer.Write([]byte(err.Error()))
-        return
-      }
+    file, err := os.Open(shareFileAbsPath)
 
-      if length == len(b) {
-        downloadTimes++
-      }
+    defer file.Close()
 
+    if err != nil {
+      fmt.Println(err)
+      return
     }
+
+    stat, err := file.Stat()
+
+    if err != nil {
+      fmt.Println(err)
+      return
+    }
+
+    writer.Header().Add("Content-Length", strconv.Itoa(int(stat.Size())))
+    writer.Header().Add("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", stat.Name()))
+
+    n, err := io.Copy(writer, bufio.NewReader(file))
+
+    if err != nil {
+      fmt.Println(err)
+      return
+    }
+
+    downloadTimes++
+
+    fmt.Printf("The file size %v have been downloaded.", n)
+
+    os.Exit(0)
   })
 
   app.Action = func(c *cli.Context) (err error) {
@@ -157,11 +172,13 @@ func main() {
       return
     }
 
-    fmt.Println("The file " + path.Base(absFilePath) + " have been shared on http://" + ip + server.Addr)
+    fmt.Printf("The file %v (%v bytes) have been shared on http://%v%v\n", path.Base(absFilePath), fileStat.Size(), ip, server.Addr)
 
     fmt.Println("Once file been downloaded, Service will shut down automatically.")
 
-    err = server.ListenAndServe()
+    if err = server.ListenAndServe(); err != nil {
+      return
+    }
 
     return
   }
