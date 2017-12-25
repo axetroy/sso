@@ -89,6 +89,8 @@ func main() {
       downloading = false
     }()
 
+    fmt.Println("Downloading...")
+
     downloading = true
 
     file, err := os.Open(shareFileAbsPath)
