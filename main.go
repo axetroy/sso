@@ -13,6 +13,8 @@ import (
   "github.com/axetroy/local-ip"
   "io"
   "bufio"
+  "github.com/mitchellh/ioprogress"
+  "github.com/dustin/go-humanize"
 )
 
 func getFreePort() (port int, err error) {
@@ -112,7 +114,13 @@ func main() {
     writer.Header().Add("Content-Length", strconv.Itoa(int(stat.Size())))
     writer.Header().Add("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", stat.Name()))
 
-    n, err := io.Copy(writer, bufio.NewReader(file))
+    // Create the progress reader
+    progress := &ioprogress.Reader{
+      Reader: bufio.NewReader(file),
+      Size:   stat.Size(),
+    }
+
+    n, err := io.Copy(writer, progress)
 
     if err != nil {
       fmt.Println(err)
@@ -121,7 +129,7 @@ func main() {
 
     downloadTimes++
 
-    fmt.Printf("The file size %v have been downloaded.", n)
+    fmt.Printf("The file size %v have been downloaded.\n", humanize.Bytes(uint64(n)))
 
     os.Exit(0)
   })
@@ -174,7 +182,7 @@ func main() {
       return
     }
 
-    fmt.Printf("The file %v (%v bytes) have been shared on http://%v%v\n", path.Base(absFilePath), fileStat.Size(), ip, server.Addr)
+    fmt.Printf("The file %v (%v) have been shared on http://%v%v\n", path.Base(absFilePath), humanize.Bytes(uint64(fileStat.Size())), ip, server.Addr)
 
     fmt.Println("Once file been downloaded, Service will shut down automatically.")
 
