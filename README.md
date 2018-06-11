@@ -1,7 +1,5 @@
 ## A cli tool to share your file
 
-![License](https://img.shields.io/badge/license-Apache-green.svg)
-
 once the file been download, will close server automatically
 
 ## Usage
