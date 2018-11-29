@@ -4,15 +4,20 @@ once the file been download, will close server automatically
 
 ## Usage
 
+### Golang
+
 ```bash
-go get -v github.com/axetroy/sso
+go get -v -u github.com/axetroy/sso
 
 sso README.md
 
 The file README.md have been shared on http://192.168.8.144:25011
 Once file been downloaded, Service will shut down automatically.
-
 ```
+
+### Binary
+
+download from [releases page](https://github.com/axetroy/sso/releases)
 
 ## Contributing
 
