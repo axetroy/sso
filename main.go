@@ -1,20 +1,21 @@
 package main
 
 import (
+  "bufio"
+  "errors"
+  "fmt"
+  "github.com/axetroy/local-ip"
+  "github.com/dustin/go-humanize"
+  "github.com/fatih/color"
+  "github.com/mitchellh/ioprogress"
+  "github.com/urfave/cli"
+  "io"
+  "net"
   "net/http"
   "os"
-  "fmt"
   "path"
-  "errors"
   "strconv"
   "time"
-  "net"
-  "github.com/urfave/cli"
-  "github.com/axetroy/local-ip"
-  "io"
-  "bufio"
-  "github.com/mitchellh/ioprogress"
-  "github.com/dustin/go-humanize"
 )
 
 func getFreePort() (port int, err error) {
@@ -33,24 +34,38 @@ func getFreePort() (port int, err error) {
   return strconv.Atoi(portString)
 }
 
-func main() {
+var (
+  downloading      bool
+  downloadTimes    int
+  shareFileAbsPath string
+  ip               string
+  err              error
+  fileSize         int64
 
-  var (
-    downloading      bool   // 是否正在下载
-    downloadTimes    int    // 已被下载的次数
-    shareFileAbsPath string // 分享文件的绝对路径
-    ip               string // ip
-    err              error
-  )
+  // color printer
+  red       = color.New(color.FgRed).SprintFunc()
+  yellow    = color.New(color.FgYellow).SprintFunc()
+  green     = color.New(color.FgGreen).SprintFunc()
+  blue      = color.New(color.FgBlue).SprintFunc()
+  cyan      = color.New(color.FgCyan).SprintFunc()
+  underline = color.New(color.Underline).SprintFunc()
+)
+
+func check() {
+  if downloadTimes > 0 {
+    fmt.Println(green("[SSO]: The file have been download. close server."))
+    os.Exit(0)
+  }
+}
+
+func main() {
 
   ticker := time.NewTicker(time.Microsecond * 100)
 
+  // start a ticker to check this download have done or not
   go func() {
     for range ticker.C {
-      if downloadTimes > 0 {
-        fmt.Println("The file have been download. close server.")
-        os.Exit(0)
-      }
+      check()
     }
   }()
 
@@ -62,9 +77,9 @@ func main() {
   app := cli.NewApp()
 
   app.Name = "sso"
-  app.Usage = "sso" + " [path]"
-  app.Version = "0.0.1"
-  app.Description = "Share Object once"
+  app.Usage = "sso your_file_path_that_you_want_to_share"
+  app.Version = "0.1.0"
+  app.Description = "Share your file with command line interface."
 
   app.Flags = []cli.Flag{
     cli.Int64Flag{
@@ -73,17 +88,15 @@ func main() {
     },
   }
 
-  server := &http.Server{Addr: ":1066"}
+  server := &http.Server{}
 
   http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-    if downloadTimes > 0 {
-      fmt.Println("The file have been download. close server.")
-      os.Exit(0)
-      return
-    }
+    check()
 
     if downloading {
-      writer.Write([]byte("The file is being downloading."))
+      if _, err := writer.Write([]byte("The file is being downloading by others. please wait!")); err != nil {
+        return
+      }
       return
     }
 
@@ -91,11 +104,15 @@ func main() {
       downloading = false
     }()
 
-    fmt.Println("Downloading...")
+    fmt.Println(blue("Downloading..."))
 
     downloading = true
 
     file, err := os.Open(shareFileAbsPath)
+
+    if err != nil {
+      return
+    }
 
     defer file.Close()
 
@@ -111,6 +128,7 @@ func main() {
       return
     }
 
+    // add download headers
     writer.Header().Add("Content-Length", strconv.Itoa(int(stat.Size())))
     writer.Header().Add("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", stat.Name()))
 
@@ -129,15 +147,15 @@ func main() {
 
     downloadTimes++
 
-    fmt.Printf("The file size %v have been downloaded.\n", humanize.Bytes(uint64(n)))
+    text := fmt.Sprintf("[SSO]: The file size %v have been downloaded.\n", humanize.Bytes(uint64(n)))
 
-    os.Exit(0)
+    fmt.Printf(green(text))
   })
 
   app.Action = func(c *cli.Context) (err error) {
     defer func() {
       if err != nil {
-        fmt.Println(err)
+        fmt.Println(red("[SSO]: " + err.Error()))
         os.Exit(1)
         return
       }
@@ -178,13 +196,17 @@ func main() {
     }
 
     if fileStat.IsDir() {
-      err = errors.New("can not share an dir")
+      err = errors.New("can only specify shared file, not shared directories")
       return
     }
 
-    fmt.Printf("The file %v (%v) have been shared on http://%v%v\n", path.Base(absFilePath), humanize.Bytes(uint64(fileStat.Size())), ip, server.Addr)
+    downloadUrl := fmt.Sprintf("http://%v%v\n", ip, server.Addr)
 
-    fmt.Println("Once file been downloaded, Service will shut down automatically.")
+    fileSize := humanize.Bytes(uint64(fileStat.Size()))
+
+    fmt.Printf("[SSO]: The file %v (%v) have been shared on %v", yellow(path.Base(absFilePath)), blue(fileSize), green(underline(downloadUrl)))
+
+    fmt.Println(cyan("[SSO]: Once file been downloaded, Service will shut down automatically."))
 
     if err = server.ListenAndServe(); err != nil {
       return
