@@ -2,33 +2,24 @@
 
 once the file been download, will close server automatically
 
-## Usage
+### Installation
 
-### Golang
+Download the executable file for your platform at [release page](https://github.com/axetroy/sso/releases)
+
+Then set the environment variable.
+
+eg, the executable file is in the `~/bin` directory.
 
 ```bash
-go get -v -u github.com/axetroy/sso
-
-sso README.md
-
-The file README.md have been shared on http://192.168.8.144:25011
-Once file been downloaded, Service will shut down automatically.
+# ~/.bash_profile
+export PATH="$PATH:~/bin"
 ```
 
-### Binary
+finally, try it out.
 
-download from [releases page](https://github.com/axetroy/sso/releases)
-
-## Contributing
-
-[Contributing Guid](https://github.com/axetroy/sso/blob/master/CONTRIBUTING.md)
-
-## Contributors
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-| [<img src="https://avatars1.githubusercontent.com/u/9758711?v=3" width="100px;"/><br /><sub>Axetroy</sub>](http://axetroy.github.io)<br />[💻](https://github.com/axetroy/sso/commits?author=axetroy) [🐛](https://github.com/axetroy/sso/issues?q=author%3Aaxetroy) 🎨 |
-| :---: |
-<!-- ALL-CONTRIBUTORS-LIST:END -->
+```bash
+sso --help
+```
 
 ## License
 
