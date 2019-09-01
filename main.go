@@ -70,7 +70,7 @@ func main() {
 
 	app.Name = "sso"
 	app.Usage = "sso <file/path>"
-	app.Version = "0.2.0"
+	app.Version = "0.3.0"
 	app.Description = "Share your file/folder with command line interface."
 
 	app.Flags = []cli.Flag{
